@@ -1,0 +1,63 @@
+clc;
+clear all;
+close all;
+x=[1 0 1 1];
+q=length(x);
+disp(x);
+fs=1000;
+T=0:1/fs:q;
+t=0;
+d=[];
+for n=1:q
+    while t<=n
+        d=[d 2*x(n)-1]
+        t=t+(1/fs);
+    end
+end
+subplot(311);
+plot(T,d);
+title('Binary Data');
+axis([0 4 -1.5 1.5]);
+
+c=sin(2*pi*T);
+subplot(312);
+plot(T,c);
+title('Carrier Signal');
+
+%MODULATION
+s=d.*c;
+subplot(313);
+plot(T,s,'.');
+title('BPSK Modulated Signal');
+
+%DEMODULATION
+fc=1;
+l=0:1/fs:1;
+b=sin(2*pi*l);
+w=[];
+for i=fs+1:fs:numel(T)
+    v=sum(s(i-fs:i).*b);
+    if v<0
+        w=[w 0];
+    else
+        w=[w 1];
+    end
+end
+if(sum(w-x)==0)
+    disp('Demodulation is corresct');
+end
+w=[w w(end)];
+figure;
+stairs(w);
+title('Demodulated Signal');
+axis([1 5 -0.5 1.5]);
+
+%SCATTER PLOT
+for i=1:length(s)
+    if s(i)<0
+        s(i)=-1
+    else
+        s(i)=1;
+    end
+end
+scatterplot(s);
