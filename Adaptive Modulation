@@ -1,0 +1,50 @@
+close all;
+clear all;
+n=input('enter the length of input bit stream');
+for snr=1:30
+    if(0<snr<=7)
+        x=randi([0 1],1,n);
+        t=pskmod(x,2);
+    elseif(7<snr<=13)
+        x=randi([0 3],1,n);
+        t=pskmod(x,4);
+    elseif(13<snr<=17)
+        x=randi([0 7],1,n);
+        t=pskmod(x,8);
+    elseif(17<snr<=22)
+        x=randi([0 15],1,n);
+        t=pskmod(x,16);
+    elseif(22<snr<=27)
+        x=randi([0 31],1,n);
+        t=pskmod(x,32);
+    elseif(snr>27)
+        x=randi([0 63],1,n);
+        t=pskmod(x,64);
+    end
+    y=awgn(t,snr,'measured');
+    if(0<snr<=7)
+        r=pskdemod(y,2);
+    elseif(7<snr<=13)
+        r=pskdemod(y,4);
+    elseif(13<snr<=17)
+        r=pskdemod(y,8);
+    elseif(17<snr<=22)
+        r=pskdemod(y,16);
+    elseif(22<snr<=27)
+        r=pskdemod(y,32);
+
+    elseif(snr>27)
+        r=pskdemod(y,64);
+    end
+    b(snr)=size(find([x-r]),2)/n;
+    if(b(snr)==0)
+        b(snr)=0.000001;
+    end
+end
+snr=1:30;
+semilogy(snr,b);
+axis([0 30 0.00000001 0.1])
+xlabel('snr in db');
+ylabel('bit error rate');
+title('adaptive modulation');
+    
