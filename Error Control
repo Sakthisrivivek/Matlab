@@ -1,0 +1,106 @@
+clc;
+clear all;
+close all;
+n = 7;
+k = 4;
+P = [ 1 1 1;1 1 0;1 0 1;0 1 1 ];            
+G = [ eye(k) P ];
+H = [ P' eye(n-k) ];
+% ENCODER
+msg = [ 1 0 1 1 ];
+code = mod(msg*G,2);
+code(4)= ~code(4);
+recd = code;
+% DECODER
+syndrome = mod(recd * H',2);
+find = 0;
+for ii = 1:n
+    if ~find
+        errvect = zeros(1,n);
+        errvect(ii) = 1;
+        search = mod(errvect * H',2);
+        if search == syndrome
+            find = 1;
+            index = ii;
+        end
+    end
+end
+disp(['Position of error in codeword=',num2str(index)]);
+correctedcode = recd;
+correctedcode(index) = mod(recd(index)+1,2);
+msg_decoded=correctedcode;
+msg_decoded=msg_decoded(1:4);
+msg=round(rand(1,40000));
+msg=reshape(msg,10000,4);
+snr=-2:1:17;
+for z=1:20
+    msgr=zeros(10000,4);
+    tmsgr=zeros(10000,4);
+    for w=1:10000
+        msgt=msg(w,:);
+        code=mod(msgt*G,2);
+        recd=awgn(code,snr(2));
+        noise=recd-code;
+        recd=round(recd);
+        noise=noise(1:4);
+        tmsgr(w,:)=msgt+noise;
+        tmsgr(w,:)=round(tmsgr(w,:));
+        syndrome=mod(recd*H',2);
+        find=0;
+        index=0;
+        for ii=1:n
+            if find==0
+                errvect=zeros(1,n);
+                errvect(ii)=1;
+                search=mod(errvect*H',2);
+                if search==syndrome
+                    find=1;
+                    index=ii;
+                end
+            end
+        end
+        if index~=0
+            correctedcode=recd;
+            correctedcode(index)=mod(recd(index)+1,2);
+            msg_decoded=correctedcode;
+            msg_decoded=msg_decoded(1:4);
+            msgr(w,:)=msg_decoded;
+        else
+            msgr(w,:)=recd(1:4);
+        end
+    end
+    tdiff=msg-tmsgr;
+    error=0;
+    for w=1:10000
+        find=0;
+        for xy=1:4
+            if find==0
+                if tdiff(w,xy)~=0;
+                error=error+1;
+                find=1;
+                end
+            end
+        end
+    end
+    tber(z)=error/10000;
+    diff=msg-msgr;
+    error=0;
+    for w=1:10000
+        find=0;
+        for xy=1:4
+            if find==0
+                if diff(w,xy)~=0;
+                error=error+1;
+                find=1;
+                end
+            end
+        end
+    end
+    hber(z)=error/10000;
+end
+semilogy(snr,tber,'-b*',snr,hber,'-r*');
+grid on
+legend('Unencoded','Encoded')
+axis([0 20 0.0001 1]);
+xlabel('SNR in dB');
+ylabel('BER');
