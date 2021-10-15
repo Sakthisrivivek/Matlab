@@ -1,0 +1,34 @@
+clear all;
+close all;
+clc;
+x=randi([0 1],32768,1);
+for k=1:4
+    m=2^k;
+    y=pskmod(x,m);
+    u=reshape(y,[64,512]);
+    a=ifft(u,64);
+    b=1;
+    for j=0:5:30
+      h =1/sqrt(randn(1,1)+i*(randn(1,1)));
+      p=h*a;
+      t=awgn(p,j,'measured');
+      z=inv(h)*t;
+      r=fft(z,64);
+      v=reshape(r,[32768,1]);
+      f=pskdemod(v,m);
+      [s,s1]=biterr(x,f);
+      g(b)=s1;
+      if (g(b)==0)
+         g(b)=0.0000001;
+      end
+      b=b+1;
+    end
+    j=0:5:30;
+    semilogy(j,g)
+    hold on;
+    legend('BPSK','QPSK','8PSK','16PSK');
+    xlabel('SNR (dB)');
+    ylabel('Bit Error Rate');
+    title('BER Curve');
+end
+
