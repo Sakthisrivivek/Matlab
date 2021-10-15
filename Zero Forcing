@@ -1,0 +1,61 @@
+clear all; clc; close all;
+ n=4; 
+no_bits=100;
+data=randi([0 1],no_bits,1); % Data input
+mod_data=pskmod(data,n); 
+h1=1/sqrt(rand(1,1)+i*rand(1,1)); 
+h2=1/sqrt(2)*(rand(no_bits,1)+i*rand(no_bits,1)); 
+b=1; 
+for j=1:0.5:30 %SNR 
+    tx_data=conv(mod_data,h1); % Without equaliser - Flat Fading 
+    tx_data=awgn(tx_data,j,'measured'); 
+    rx_data=pskdemod(tx_data,n); 
+    [num,ratio]=biterr(rx_data,data); 
+    g(b)=ratio; 
+    if g(b)==0    
+        g(b)=10e-7;
+    end 
+    rx_data=(tx_data.*inv(h1)); %With equaliser - Flat Fading
+    rx_data=pskdemod(rx_data,n); 
+    [num,ratio]=biterr(rx_data,data); 
+    h(b)=ratio; 
+    if h(b)==0    
+        h(b)=10e-7; 
+    end 
+    tx_data=mod_data.*h2; %Without Equaliser - Frequency Selective Fading 
+    tx_data=awgn(tx_data,j,'measured'); 
+    rx_data=pskdemod(tx_data,n); 
+    [num,ratio]=biterr(rx_data,data); 
+    i(b)=ratio; 
+    if i(b)==0     
+        i(b)=10e-7; 
+    end 
+    rx_data=tx_data./h2; %With Equaliser - Frequency Selective Fading 
+    rx_data=pskdemod(rx_data,n); 
+    [num,ratio]=biterr(rx_data,data); 
+    u(b)=ratio; 
+    if u(b)==0    
+        u(b)=10e-7;
+    end 
+    b=b+1; 
+end 
+k=1:0.5:30; 
+subplot(2,2,1); 
+semilogy(k,g);
+xlabel('SNR'); 
+ylabel('Error(BER)');
+title('Without equaliser - Flat Fading'); 
+subplot(2,2,2); 
+semilogy(k,h); 
+xlabel('SNR'); 
+ylabel('Error(BER)');
+title('With equaliser - Flat Fading'); 
+subplot(2,2,3); semilogy(k,i); 
+xlabel('SNR'); ylabel('Error(BER)');
+title('Without Equaliser - Frequency Selective'); 
+subplot(2,2,4); 
+semilogy(k,u); 
+xlabel('SNR'); 
+ylabel('Error(BER)');
+title('With Equaliser - Frequency Selective'); 
+
